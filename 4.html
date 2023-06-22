@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Player CRUD Example</title>
+  <script src="https://unpkg.com/react/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone/babel.min.js" crossorigin></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // Player component
+    class Player extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = {
+          players: [],
+          name: '',
+          score: '',
+          updateIndex: null,
+        };
+      }
+
+      componentDidMount() {
+        this.setState({ players: this.getStoredPlayers() });
+      }
+
+      getStoredPlayers() {
+        // Retrieve players from localStorage if available
+        const storedPlayers = localStorage.getItem('players');
+        return storedPlayers ? JSON.parse(storedPlayers) : [];
+      }
+
+      setStoredPlayers(players) {
+        // Store players in localStorage
+        localStorage.setItem('players', JSON.stringify(players));
+      }
+
+      addPlayer() {
+        const { name, score } = this.state;
+        const player = { name, score };
+
+        // Add the new player to the list and update the state
+        this.setState(prevState => ({
+          players: [...prevState.players, player],
+          name: '',
+          score: ''
+        }), () => {
+          this.setStoredPlayers(this.state.players);
+        });
+      }
+
+      deletePlayer(index) {
+        // Delete the player from the list and update the state
+        this.setState(prevState => {
+          const updatedPlayers = [...prevState.players];
+          updatedPlayers.splice(index, 1);
+          return { players: updatedPlayers };
+        }, () => {
+          this.setStoredPlayers(this.state.players);
+        });
+      }
+
+      updatePlayer(index) {
+        const { name, score } = this.state;
+
+        // Update the player in the list and update the state
+        this.setState(prevState => {
+          const updatedPlayers = [...prevState.players];
+          updatedPlayers[index] = { name, score };
+          return { players: updatedPlayers, name: '', score: '', updateIndex: null };
+        }, () => {
+          this.setStoredPlayers(this.state.players);
+        });
+      }
+
+      setUpdatePlayer(index) {
+        const { name, score } = this.state;
+        const player = this.state.players[index];
+
+        // Set the player details in the update form
+        this.setState({
+          name: player.name,
+          score: player.score,
+          updateIndex: index,
+        });
+      }
+
+      render() {
+        const { players, name, score, updateIndex } = this.state;
+
+        return (
+          <div>
+            <h2>Player List</h2>
+            <ul>
+              {players.map((player, index) => (
+                <li key={index}>
+                  {player.name} - {player.score}
+                  <button onClick={() => this.deletePlayer(index)}>Delete</button>
+                  <button onClick={() => this.setUpdatePlayer(index)}>Update</button>
+                </li>
+              ))}
+            </ul>
+
+            <h2>{updateIndex !== null ? 'Update Player' : 'Add Player'}</h2>
+            <form onSubmit={e => { e.preventDefault(); updateIndex !== null ? this.updatePlayer(updateIndex) : this.addPlayer(); }}>
+              <input type="text" value={name} onChange={e => this.setState({ name: e.target.value })} placeholder="Name" required />
+              <input type="number" value={score} onChange={e => this.setState({ score: e.target.value })} placeholder="Score" required />
+              <button type="submit">{updateIndex !== null ? 'Update' : 'Add'}</button>
+            </form>
+          </div>
+        );
+      }
+    }
+
+    // Render the Player component to the root element
+    ReactDOM.render(<Player />, document.getElementById('root'));
+  </script>
+</body>
+</html>
